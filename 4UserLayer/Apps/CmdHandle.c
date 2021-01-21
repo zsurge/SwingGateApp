@@ -377,7 +377,9 @@ static SYSERRORCODE_E NormalOpen ( uint8_t* msgBuf )//常开模式
     uint8_t buf[MQTT_TEMP_LEN] = {0};
     uint16_t len = 0;
     CMD_BUFF_STRU *ptCmd = &gCmd_buff;
-    uint8_t tmpcmd[18] = { 0x02,0x00,0x11,0x01,0x0A,0x37,0x30,0x35,0x30,0x31,0x30,0x30,0x31,0x30,0x31,0x35,0x03,0x00 };
+    uint8_t comm6[18] = { 0x02,0x00,0x11,0x01,0x0A,0x33,0x30,0x35,0x30,0x31,0x30,0x30,0x31,0x30,0x31,0x35,0x03,0x00 };
+    uint8_t comm4[18] = { 0x02,0x00,0x11,0x01,0x0A,0x34,0x30,0x35,0x30,0x31,0x30,0x30,0x31,0x30,0x31,0x35,0x03,0x00 };    
+
     uint8_t openType[2] = {0};
     uint8_t mode = 0;
 
@@ -402,22 +404,30 @@ static SYSERRORCODE_E NormalOpen ( uint8_t* msgBuf )//常开模式
 
     if(mode == 1)
     {
-        tmpcmd[5] = 0x31;//常开
+        comm6[5] = 0x31;//常开
+        comm4[5] = 0x31;//常开
     }
     else
     {
-        tmpcmd[5] = 0x37;//正常模式
+        comm6[5] = 0x33;//正常模式
+        comm4[5] = 0x34;
     }
 
     if(Nonzero(gdevParam,11) == 1)
     {    
-        memcpy(tmpcmd+6,gdevParam+1,10);
+        memcpy(comm6+6,gdevParam+1,10);
     }
+
+    if(Nonzero(gdev4Param,11) == 1)
+    {    
+        memcpy(comm4+6,gdev4Param+1,10);
+    }    
     
-    tmpcmd[17] = xorCRC(tmpcmd,17);
+    comm6[17] = xorCRC(comm6,17);
+    comm4[17] = xorCRC(comm4,17);
     
     ptCmd->cmd_len = 18;  
-    memcpy(ptCmd->cmd,tmpcmd,ptCmd->cmd_len);  
+    memcpy(ptCmd->cmd,comm6,ptCmd->cmd_len);  
     
     /* 使用消息队列实现指针变量的传递 */
     if(xQueueSend(xCmdQueue,             /* 消息队列句柄 */
@@ -428,6 +438,9 @@ static SYSERRORCODE_E NormalOpen ( uint8_t* msgBuf )//常开模式
         //发送卡号失败蜂鸣器提示
         //或者是队列满                
     }     
+
+    ptCmd->cmd_len = 18;  
+    memcpy(ptCmd->cmd,comm4,ptCmd->cmd_len);     
 
     /* 使用消息队列实现指针变量的传递 */
     if(xQueueSend(xComm4Queue,             /* 消息队列句柄 */

@@ -154,5 +154,16 @@ static void readDevParam(void)
         log_d("readDevParam send success\r\n");
     }
 
+
+    /* 使用消息队列实现指针变量的传递 */
+    if(xQueueSend(xComm4Queue,             /* 消息队列句柄 */
+               (void *) &ptCmd,             /* 发送结构体指针变量ptReader的地址 */
+               (TickType_t)30) != pdPASS )
+    {
+      xQueueReset(xComm4Queue);
+      //发送卡号失败蜂鸣器提示
+      //或者是队列满                
+    } 
+
 }
 
